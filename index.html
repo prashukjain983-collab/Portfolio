@@ -12,6 +12,31 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
   
   <style>
+  .bubble-bg {
+     position: fixed;
+     top: 0; left: 0;
+     width: 100vw; height: 100vh;
+     z-index: -1;
+     pointer-events: none;
+     overflow: hidden;
+   }
+  .bubble {
+     position: absolute;
+     border-radius: 50%;
+     opacity: 0.36;
+     background: linear-gradient(90deg,#18e1ef 0%,#7f53ac 100%);
+     box-shadow: 0 8px 38px rgba(24,225,239,0.28);
+     animation: bubble-up 6s linear infinite;
+   }
+  @keyframes bubble-up {
+     from { transform: translateY(0) scale(1); opacity: 0.36; }
+     70%  { opacity: 0.32; }
+     to { transform: translateY(-100vh) scale(1.1); opacity: 0.04;}
+ }
+
+
+
+    
     :root {
       --primary: #18e1ef;
       --primary2: #7f53ac;
@@ -576,6 +601,8 @@
   </style>
 </head>
 <body>
+  <div class="bubble-bg"></div>
+
   <!-- Header Navigation with Logo -->
   <header>
     <span class="pj-logo-header">PJ</span>
@@ -863,6 +890,20 @@
       .catch(err => console.log("Service Worker registration failed:", err));
   }
 </script>
+const bubbleBg = document.querySelector('.bubble-bg');
+function createBubble() {
+  const bubble = document.createElement('div');
+  bubble.classList.add('bubble');
+  const size = Math.random() * 60 + 22; // Diameter 22px–82px
+  bubble.style.width = bubble.style.height = size + 'px';
+  bubble.style.left = (Math.random() * 92) + 'vw';
+  bubble.style.bottom = '-90px';
+  bubble.style.animationDuration = (Math.random()*2+4) + 's'; // 4-6s
+  bubble.style.opacity = Math.random() * 0.13 + 0.19;
+  bubbleBg.appendChild(bubble);
+  setTimeout(() => bubble.remove(), 6200);
+}
+setInterval(createBubble, 600); // 1 bubble every ~0.6s
 
 </body>
 </html>
