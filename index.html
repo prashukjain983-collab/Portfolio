@@ -11,6 +11,7 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
 
   <style>
+    /* All your existing styles remain the same */
     .bubble-bg {
       position: fixed;
       top: 0; left: 0;
@@ -103,6 +104,33 @@
     nav a.active {
       color: var(--primary2);
     }
+    
+    /* Authentication Button Styles */
+    .auth-button {
+      margin-left: auto;
+      padding: 8px 20px;
+      border: 2px solid var(--primary);
+      border-radius: 20px;
+      background: transparent;
+      color: var(--primary);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .auth-button:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+    .user-info {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: var(--primary);
+    }
+    
     main {
       margin-top: 78px;
     }
@@ -603,6 +631,18 @@
       display: none;
     }
 
+    .auth-warning {
+      background: rgba(255, 193, 7, 0.1);
+      border: 2px solid #ffc107;
+      color: #ffc107;
+      padding: 15px 20px;
+      border-radius: 12px;
+      text-align: center;
+      margin: 20px 0;
+      font-weight: 600;
+      display: none;
+    }
+
     /* Footer Section */
     footer {
       background: var(--footer-bg);
@@ -683,6 +723,10 @@
       header{
         padding: 0 12px 0 7px;
       }
+      .auth-button, .user-info {
+        margin-left: 10px;
+        font-size: 0.8rem;
+      }
     }
     @media(max-width:700px) {
       section, .contact-section {
@@ -715,7 +759,7 @@
 <body>
   <div class="bubble-bg"></div>
 
-  <!-- Header Navigation with Logo -->
+  <!-- Header Navigation with Login/Logout Button -->
   <header>
     <span class="pj-logo-header">PJ</span>
     <span class="logo-site">Prashuk Jain</span>
@@ -727,6 +771,13 @@
       <a href="#achievements">Achievements</a>
       <a href="#contact">Contact</a>
     </nav>
+    
+    <!-- Authentication Section -->
+    <button id="authButton" class="auth-button" style="display: none;">Login</button>
+    <div id="userInfo" class="user-info" style="display: none;">
+      <span id="userEmail"></span>
+      <button id="logoutBtn" class="auth-button">Logout</button>
+    </div>
   </header>
 
   <main id="home">
@@ -981,6 +1032,10 @@
             ❌ Error sending message. Please try again.
           </div>
           
+          <div class="auth-warning" id="authWarning">
+            ⚠️ Please log in to send messages. Only authenticated users can contact me.
+          </div>
+          
           <button type="submit" class="submit-btn" id="submitBtn">
             Send Message <i class="ri-send-plane-line"></i>
           </button>
@@ -1037,14 +1092,14 @@
     </div>
   </footer>
 
-  <!-- Firebase SDKs v9 (Modular) -->
+  <!-- Firebase SDKs v9 (Modular) with Authentication -->
   <script type="module">
     // Import Firebase functions
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
     // Your Firebase configuration
-    // Replace with your actual Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyC8ByQIuNOfe9PNOMJGCZTKzPN2ls4gf7w",
       authDomain: "prashuk-ce0f8.firebaseapp.com",
@@ -1058,16 +1113,90 @@
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
-    // Get form elements
+    // Get DOM elements
     const contactForm = document.getElementById('contactForm');
     const submitBtn = document.getElementById('submitBtn');
     const successMessage = document.getElementById('successMessage');
     const errorMessage = document.getElementById('errorMessage');
+    const authWarning = document.getElementById('authWarning');
+    const authButton = document.getElementById('authButton');
+    const userInfo = document.getElementById('userInfo');
+    const userEmail = document.getElementById('userEmail');
+    const logoutBtn = document.getElementById('logoutBtn');
 
-    // Form submission handler
+    let currentUser = null;
+
+    // Authentication state observer
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in
+        currentUser = user;
+        authButton.style.display = 'none';
+        userInfo.style.display = 'flex';
+        userEmail.textContent = user.email;
+        hideAuthWarning();
+      } else {
+        // User is signed out
+        currentUser = null;
+        authButton.style.display = 'block';
+        userInfo.style.display = 'none';
+        authButton.textContent = 'Login';
+      }
+    });
+
+    // Authentication button click handler
+    authButton.addEventListener('click', () => {
+      handleAuthentication();
+    });
+
+    // Logout button click handler
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        showSuccess('Logged out successfully!');
+      } catch (error) {
+        console.error('Error signing out:', error);
+        showError('Error signing out. Please try again.');
+      }
+    });
+
+    // Simple authentication handler (you can make this more sophisticated)
+    async function handleAuthentication() {
+      const email = prompt('Enter your email:');
+      if (!email) return;
+      
+      const password = prompt('Enter your password:');
+      if (!password) return;
+      
+      const action = confirm('Click OK to Login, Cancel to Sign Up');
+      
+      try {
+        if (action) {
+          // Login
+          await signInWithEmailAndPassword(auth, email, password);
+          showSuccess('Logged in successfully!');
+        } else {
+          // Sign up
+          await createUserWithEmailAndPassword(auth, email, password);
+          showSuccess('Account created and logged in successfully!');
+        }
+      } catch (error) {
+        console.error('Authentication error:', error);
+        showError(error.message);
+      }
+    }
+
+    // Form submission handler with authentication check
     contactForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      
+      // Check if user is authenticated
+      if (!currentUser) {
+        showAuthWarning('Please log in to send messages. Only authenticated users can contact me.');
+        return;
+      }
       
       // Get form data
       const formData = new FormData(contactForm);
@@ -1096,9 +1225,10 @@
       // Hide previous messages
       successMessage.style.display = 'none';
       errorMessage.style.display = 'none';
+      authWarning.style.display = 'none';
 
       try {
-        // Save to Firestore
+        // Save to Firestore with user authentication info
         await addDoc(collection(db, 'messages'), {
           name: name,
           email: email,
@@ -1106,7 +1236,9 @@
           message: message,
           timestamp: serverTimestamp(),
           userAgent: navigator.userAgent,
-          url: window.location.href
+          url: window.location.href,
+          userId: currentUser.uid,
+          userEmail: currentUser.email
         });
 
         // Show success message
@@ -1140,6 +1272,15 @@
       setTimeout(() => {
         errorMessage.style.display = 'none';
       }, 5000);
+    }
+
+    function showAuthWarning(message) {
+      authWarning.textContent = `⚠️ ${message}`;
+      authWarning.style.display = 'block';
+    }
+
+    function hideAuthWarning() {
+      authWarning.style.display = 'none';
     }
 
     // Add spinning animation for loader
