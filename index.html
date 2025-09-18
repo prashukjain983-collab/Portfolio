@@ -829,6 +829,57 @@
     </section>
 
     <!-- Contact Section -->
+    <!-- ✅ CONTACT SECTION -->
+<section id="contact">
+  <h2>Contact Me</h2>
+  <form id="contactForm">
+    <input type="text" id="name" placeholder="Your Name" required>
+    <input type="email" id="email" placeholder="Your Email" required>
+    <textarea id="message" placeholder="Your Message" required></textarea>
+    <button type="submit">Send Message</button>
+  </form>
+  <p id="responseMessage" style="color: green; display:none;">✅ Message sent!</p>
+</section>
+
+<!-- ✅ Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+
+<script>
+  // 🔹 Replace with your Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyC8ByQIuNOfe9PNOMJGCZTKzPN2ls4gf7w",
+  authDomain: "prashuk-ce0f8.firebaseapp.com",
+  projectId: "prashuk-ce0f8",
+  storageBucket: "prashuk-ce0f8.firebasestorage.app",
+  messagingSenderId: "109567391514",
+  appId: "1:109567391514:web:c20e7877192b423e839ea3",
+  measurementId: "G-93C2KCMLKY"
+  };
+
+  // Initialize Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // ✅ Save contact form data to Firestore
+  document.getElementById("contactForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      await db.collection("messages").add({
+        name: document.getElementById("name").value,
+        email: document.getElementById("email").value,
+        message: document.getElementById("message").value,
+        timestamp: new Date()
+      });
+
+      document.getElementById("responseMessage").style.display = "block";
+      document.getElementById("contactForm").reset();
+    } catch (error) {
+      alert("❌ Error sending message: " + error.message);
+    }
+  });
+</script>
+
     <section id="contact" class="contact-section">
       <div class="contact-title">Get In Touch</div>
       <div class="contact-desc">Let's connect and explore opportunities together</div>
