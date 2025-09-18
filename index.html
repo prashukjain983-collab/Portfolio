@@ -491,6 +491,118 @@
       font-weight: 400;
       color: #ece2f4;
     }
+
+    /* Contact Form Styles */
+    .contact-form {
+      background: var(--box-bg);
+      border: 1.5px solid var(--box-border);
+      border-radius: 18px;
+      padding: 40px 35px;
+      margin: 40px auto 60px auto;
+      max-width: 600px;
+      box-shadow: 0 4px 18px 0 rgba(30,30,60,0.07);
+    }
+    
+    .contact-form h3 {
+      font-size: 1.8rem;
+      color: var(--primary);
+      margin-bottom: 25px;
+      text-align: center;
+      font-weight: 700;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--box-border);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 1rem;
+      font-family: 'Montserrat', sans-serif;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      box-sizing: border-box;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(24,225,239,0.1);
+    }
+    
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: #b3acf8;
+    }
+    
+    .form-group textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    
+    .submit-btn {
+      width: 100%;
+      padding: 14px 30px;
+      background: var(--gradient);
+      color: #fff;
+      border: none;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(24,225,239,0.2);
+    }
+    
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(24,225,239,0.3);
+    }
+    
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .success-message {
+      background: rgba(46, 204, 113, 0.1);
+      border: 2px solid #2ecc71;
+      color: #2ecc71;
+      padding: 15px 20px;
+      border-radius: 12px;
+      text-align: center;
+      margin: 20px 0;
+      font-weight: 600;
+      display: none;
+    }
+    
+    .error-message {
+      background: rgba(231, 76, 60, 0.1);
+      border: 2px solid #e74c3c;
+      color: #e74c3c;
+      padding: 15px 20px;
+      border-radius: 12px;
+      text-align: center;
+      margin: 20px 0;
+      font-weight: 600;
+      display: none;
+    }
+
     /* Footer Section */
     footer {
       background: var(--footer-bg);
@@ -578,6 +690,10 @@
       }
       .contact-card {
         padding: 14px 15px;
+      }
+      .contact-form {
+        padding: 25px 20px;
+        margin: 30px 10px 40px 10px;
       }
     }
     @media(max-width:500px){
@@ -828,61 +944,49 @@
       </div>
     </section>
 
-    <!-- Contact Section -->
-    <!-- ✅ CONTACT SECTION -->
-<section id="contact">
-  <h2>Contact Me</h2>
-  <form id="contactForm">
-    <input type="text" id="name" placeholder="Your Name" required>
-    <input type="email" id="email" placeholder="Your Email" required>
-    <textarea id="message" placeholder="Your Message" required></textarea>
-    <button type="submit">Send Message</button>
-  </form>
-  <p id="responseMessage" style="color: green; display:none;">✅ Message sent!</p>
-</section>
-
-<!-- ✅ Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
-
-<script>
-  // 🔹 Replace with your Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyC8ByQIuNOfe9PNOMJGCZTKzPN2ls4gf7w",
-  authDomain: "prashuk-ce0f8.firebaseapp.com",
-  projectId: "prashuk-ce0f8",
-  storageBucket: "prashuk-ce0f8.firebasestorage.app",
-  messagingSenderId: "109567391514",
-  appId: "1:109567391514:web:c20e7877192b423e839ea3",
-  measurementId: "G-93C2KCMLKY"
-  };
-
-  // Initialize Firebase
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  // ✅ Save contact form data to Firestore
-  document.getElementById("contactForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    try {
-      await db.collection("messages").add({
-        name: document.getElementById("name").value,
-        email: document.getElementById("email").value,
-        message: document.getElementById("message").value,
-        timestamp: new Date()
-      });
-
-      document.getElementById("responseMessage").style.display = "block";
-      document.getElementById("contactForm").reset();
-    } catch (error) {
-      alert("❌ Error sending message: " + error.message);
-    }
-  });
-</script>
-
+    <!-- Contact Section with Firebase Form -->
     <section id="contact" class="contact-section">
       <div class="contact-title">Get In Touch</div>
       <div class="contact-desc">Let's connect and explore opportunities together</div>
+      
+      <!-- Contact Form -->
+      <div class="contact-form">
+        <h3><i class="ri-mail-send-line"></i> Send Message</h3>
+        <form id="contactForm">
+          <div class="form-group">
+            <label for="name">Full Name *</label>
+            <input type="text" id="name" name="name" required placeholder="Enter your full name">
+          </div>
+          
+          <div class="form-group">
+            <label for="email">Email Address *</label>
+            <input type="email" id="email" name="email" required placeholder="Enter your email">
+          </div>
+          
+          <div class="form-group">
+            <label for="subject">Subject</label>
+            <input type="text" id="subject" name="subject" placeholder="Message subject (optional)">
+          </div>
+          
+          <div class="form-group">
+            <label for="message">Message *</label>
+            <textarea id="message" name="message" required placeholder="Write your message here..."></textarea>
+          </div>
+          
+          <div class="success-message" id="successMessage">
+            ✅ Message sent successfully! I'll get back to you soon.
+          </div>
+          
+          <div class="error-message" id="errorMessage">
+            ❌ Error sending message. Please try again.
+          </div>
+          
+          <button type="submit" class="submit-btn" id="submitBtn">
+            Send Message <i class="ri-send-plane-line"></i>
+          </button>
+        </form>
+      </div>
+
       <div class="contact-methods">
         <!-- EMAIL CARD -->
         <div class="contact-card email">
@@ -917,7 +1021,9 @@
       </div>
     </section>
   </main>
+  
   <link rel="icon" sizes="192x192" href="profile.jpg">
+  
   <!-- FOOTER -->
   <footer>
     <div>Currently Class 12 &bull; JEE Aspirant &bull; Future Engineer</div>
@@ -931,7 +1037,123 @@
     </div>
   </footer>
 
-  <!-- Bubble Animation Script (Corrected) -->
+  <!-- Firebase SDKs v9 (Modular) -->
+  <script type="module">
+    // Import Firebase functions
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+    // Your Firebase configuration
+    // Replace with your actual Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyC8ByQIuNOfe9PNOMJGCZTKzPN2ls4gf7w",
+      authDomain: "prashuk-ce0f8.firebaseapp.com",
+      projectId: "prashuk-ce0f8",
+      storageBucket: "prashuk-ce0f8.firebasestorage.app",
+      messagingSenderId: "109567391514",
+      appId: "1:109567391514:web:c20e7877192b423e839ea3",
+      measurementId: "G-93C2KCMLKY"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Get form elements
+    const contactForm = document.getElementById('contactForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const successMessage = document.getElementById('successMessage');
+    const errorMessage = document.getElementById('errorMessage');
+
+    // Form submission handler
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Get form data
+      const formData = new FormData(contactForm);
+      const name = formData.get('name').trim();
+      const email = formData.get('email').trim();
+      const subject = formData.get('subject').trim();
+      const message = formData.get('message').trim();
+      
+      // Basic validation
+      if (!name || !email || !message) {
+        showError('Please fill in all required fields.');
+        return;
+      }
+      
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showError('Please enter a valid email address.');
+        return;
+      }
+
+      // Disable submit button and show loading
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = 'Sending... <i class="ri-loader-4-line" style="animation: spin 1s linear infinite;"></i>';
+      
+      // Hide previous messages
+      successMessage.style.display = 'none';
+      errorMessage.style.display = 'none';
+
+      try {
+        // Save to Firestore
+        await addDoc(collection(db, 'messages'), {
+          name: name,
+          email: email,
+          subject: subject || 'No subject',
+          message: message,
+          timestamp: serverTimestamp(),
+          userAgent: navigator.userAgent,
+          url: window.location.href
+        });
+
+        // Show success message
+        showSuccess('Message sent successfully! I\'ll get back to you soon.');
+        
+        // Reset form
+        contactForm.reset();
+        
+      } catch (error) {
+        console.error('Error saving message:', error);
+        showError('Error sending message. Please try again or contact directly via email.');
+      } finally {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Send Message <i class="ri-send-plane-line"></i>';
+      }
+    });
+
+    // Helper functions
+    function showSuccess(message) {
+      successMessage.textContent = `✅ ${message}`;
+      successMessage.style.display = 'block';
+      setTimeout(() => {
+        successMessage.style.display = 'none';
+      }, 5000);
+    }
+
+    function showError(message) {
+      errorMessage.textContent = `❌ ${message}`;
+      errorMessage.style.display = 'block';
+      setTimeout(() => {
+        errorMessage.style.display = 'none';
+      }, 5000);
+    }
+
+    // Add spinning animation for loader
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+
+  <!-- Bubble Animation Script -->
   <script>
     const bubbleBg = document.querySelector('.bubble-bg');
 
