@@ -1094,10 +1094,9 @@
 
   <!-- Firebase SDKs v9 (Modular) with Authentication -->
   <script type="module">
-    // Import Firebase functions
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
     import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
     // Your Firebase configuration
     const firebaseConfig = {
@@ -1110,12 +1109,12 @@
       measurementId: "G-93C2KCMLKY"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+    setPersistence(auth, browserLocalPersistence);
 
-    // Get DOM elements
+    // DOM elements
     const contactForm = document.getElementById('contactForm');
     const submitBtn = document.getElementById('submitBtn');
     const successMessage = document.getElementById('successMessage');
@@ -1128,107 +1127,148 @@
 
     let currentUser = null;
 
-    // Authentication state observer
+    // Hide login/logout initially
+    authButton.style.display = 'none';
+    userInfo.style.display = 'none';
+
+    // Auth dialog variables
+    let authDialog = null;
+    let loginBtn = null, signupBtn = null, dlgEmail = null, dlgPass = null, authMsg = null;
+
+    // Create and show authentication dialog
+    function showAuthDialog() {
+      if (!authDialog) {
+        authDialog = document.createElement('dialog');
+        authDialog.style.borderRadius = "18px";
+        authDialog.style.boxShadow = "0 12px 32px 0 #28236c40";
+        authDialog.innerHTML = `
+          <form method="dialog" style="padding:28px; width:320px; background:#291c43;">
+            <div style="text-align:center;font-weight:700;font-size:21px;margin-bottom:12px;color:#18e1ef">
+              Authentication
+            </div>
+            <div id="authMsg" style="min-height:24px;margin-bottom:5px;font-size:13px;"></div>
+            <input type="email" id="dlgEmail" placeholder="Email" style="margin-bottom:14px;width:100%;padding:8px 9px;border-radius:8px;border:1px solid #514172;background:#342968;color:#fff;">
+            <input type="password" id="dlgPass" placeholder="Password" style="margin-bottom:13px;width:100%;padding:8px 9px;border-radius:8px;border:1px solid #514172;background:#342968;color:#fff;">
+            <div style="display:flex;gap:7px;">
+              <button type="button" id="loginBtn" style="flex:1;background:#18e1ef;border:none;color:#291c43;font-weight:600;padding:9px;border-radius:8px;cursor:pointer;">Login</button>
+              <button type="button" id="signupBtn" style="flex:1;background:#7f53ac;border:none;color:#fff;font-weight:600;padding:9px;border-radius:8px;cursor:pointer;">Sign Up</button>
+            </div>
+            <div style="margin-top:8px;font-size:12px;color:#c6b8fb;">
+             New sign-ups get a verification link via email.
+            </div>
+          </form>
+        `;
+        document.body.appendChild(authDialog);
+        loginBtn = authDialog.querySelector('#loginBtn');
+        signupBtn = authDialog.querySelector('#signupBtn');
+        dlgEmail = authDialog.querySelector('#dlgEmail');
+        dlgPass = authDialog.querySelector('#dlgPass');
+        authMsg = authDialog.querySelector('#authMsg');
+
+        loginBtn.onclick = async () => {
+          await handleLogin();
+        };
+        signupBtn.onclick = async () => {
+          await handleSignup();
+        };
+      }
+      authMsg.textContent = '';
+      dlgEmail.value = '';
+      dlgPass.value = '';
+      authDialog.showModal();
+    }
+
+    // Handle login with email verification check
+    async function handleLogin() {
+      authMsg.textContent = '';
+      const email = dlgEmail.value.trim();
+      const password = dlgPass.value.trim();
+      if (!email || !password) { authMsg.textContent = "Enter both email and password!"; return; }
+      try {
+        let res = await signInWithEmailAndPassword(auth, email, password);
+        if (!res.user.emailVerified) {
+          await sendEmailVerification(res.user);
+          await signOut(auth);
+          authMsg.textContent = "Email not verified. Verification link sent. Check your inbox.";
+          return;
+        }
+        authMsg.textContent = "Login successful. Welcome.";
+        setTimeout(()=>{authDialog.close();},800);
+      } catch(e) {
+        authMsg.textContent = (e && e.message) || String(e);
+      }
+    }
+
+    // Handle signup with verification email sent
+    async function handleSignup() {
+      authMsg.textContent = '';
+      const email = dlgEmail.value.trim();
+      const password = dlgPass.value.trim();
+      if (!email || !password) { authMsg.textContent = "Enter both email and password!"; return; }
+      try {
+        let res = await createUserWithEmailAndPassword(auth, email, password);
+        await sendEmailVerification(res.user);
+        await signOut(auth);
+        authMsg.textContent = "Account created! Verification email sent. Please verify and then login.";
+      } catch(e) {
+        authMsg.textContent = (e && e.message) || String(e);
+      }
+    }
+
+    // Button to open auth dialog
+    authButton.addEventListener('click', showAuthDialog);
+
+    // Logout button handler
+    logoutBtn.addEventListener('click', async () => {
+      await signOut(auth);
+    });
+
+    // Auth state observer
     onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // User is signed in
+      if (user && user.emailVerified) {
         currentUser = user;
         authButton.style.display = 'none';
         userInfo.style.display = 'flex';
         userEmail.textContent = user.email;
         hideAuthWarning();
       } else {
-        // User is signed out
         currentUser = null;
         authButton.style.display = 'block';
         userInfo.style.display = 'none';
         authButton.textContent = 'Login';
-      }
-    });
-
-    // Authentication button click handler
-    authButton.addEventListener('click', () => {
-      handleAuthentication();
-    });
-
-    // Logout button click handler
-    logoutBtn.addEventListener('click', async () => {
-      try {
-        await signOut(auth);
-        showSuccess('Logged out successfully!');
-      } catch (error) {
-        console.error('Error signing out:', error);
-        showError('Error signing out. Please try again.');
-      }
-    });
-
-    // Simple authentication handler (you can make this more sophisticated)
-    async function handleAuthentication() {
-      const email = prompt('Enter your email:');
-      if (!email) return;
-      
-      const password = prompt('Enter your password:');
-      if (!password) return;
-      
-      const action = confirm('Click OK to Login, Cancel to Sign Up');
-      
-      try {
-        if (action) {
-          // Login
-          await signInWithEmailAndPassword(auth, email, password);
-          showSuccess('Logged in successfully!');
-        } else {
-          // Sign up
-          await createUserWithEmailAndPassword(auth, email, password);
-          showSuccess('Account created and logged in successfully!');
+        if (user && !user.emailVerified) {
+          signOut(auth);
         }
-      } catch (error) {
-        console.error('Authentication error:', error);
-        showError(error.message);
       }
-    }
+    });
 
-    // Form submission handler with authentication check
+    // Contact form submission handler with auth check
     contactForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
-      // Check if user is authenticated
       if (!currentUser) {
         showAuthWarning('Please log in to send messages. Only authenticated users can contact me.');
         return;
       }
-      
-      // Get form data
       const formData = new FormData(contactForm);
       const name = formData.get('name').trim();
       const email = formData.get('email').trim();
       const subject = formData.get('subject').trim();
       const message = formData.get('message').trim();
-      
-      // Basic validation
       if (!name || !email || !message) {
         showError('Please fill in all required fields.');
         return;
       }
-      
-      // Email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         showError('Please enter a valid email address.');
         return;
       }
-
-      // Disable submit button and show loading
       submitBtn.disabled = true;
       submitBtn.innerHTML = 'Sending... <i class="ri-loader-4-line" style="animation: spin 1s linear infinite;"></i>';
-      
-      // Hide previous messages
       successMessage.style.display = 'none';
       errorMessage.style.display = 'none';
       authWarning.style.display = 'none';
-
       try {
-        // Save to Firestore with user authentication info
         await addDoc(collection(db, 'messages'), {
           name: name,
           email: email,
@@ -1240,85 +1280,45 @@
           userId: currentUser.uid,
           userEmail: currentUser.email
         });
-
-        // Show success message
-        showSuccess('Message sent successfully! I\'ll get back to you soon.');
-        
-        // Reset form
+        showSuccess("Message sent successfully! I'll get back to you soon.");
         contactForm.reset();
-        
       } catch (error) {
         console.error('Error saving message:', error);
         showError('Error sending message. Please try again or contact directly via email.');
       } finally {
-        // Re-enable submit button
         submitBtn.disabled = false;
         submitBtn.innerHTML = 'Send Message <i class="ri-send-plane-line"></i>';
       }
     });
 
-    // Helper functions
+    // Helper display functions
     function showSuccess(message) {
       successMessage.textContent = `✅ ${message}`;
       successMessage.style.display = 'block';
-      setTimeout(() => {
-        successMessage.style.display = 'none';
-      }, 5000);
+      setTimeout(() => { successMessage.style.display = 'none'; }, 5000);
     }
-
     function showError(message) {
       errorMessage.textContent = `❌ ${message}`;
       errorMessage.style.display = 'block';
-      setTimeout(() => {
-        errorMessage.style.display = 'none';
-      }, 5000);
+      setTimeout(() => { errorMessage.style.display = 'none'; }, 5000);
     }
-
     function showAuthWarning(message) {
       authWarning.textContent = `⚠️ ${message}`;
       authWarning.style.display = 'block';
     }
-
     function hideAuthWarning() {
       authWarning.style.display = 'none';
     }
 
-    // Add spinning animation for loader
+    // Loader spin animation
     const style = document.createElement('style');
     style.textContent = `
       @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+        from { transform: rotate(0deg);}
+        to { transform: rotate(360deg);}
       }
     `;
     document.head.appendChild(style);
-  </script>
-
-  <!-- Bubble Animation Script -->
-  <script>
-    const bubbleBg = document.querySelector('.bubble-bg');
-
-    function createBubble() {
-      const bubble = document.createElement('div');
-      bubble.classList.add('bubble');
-      const size = Math.random() * 60 + 22;
-      bubble.style.width = bubble.style.height = size + 'px';
-      bubble.style.left = (Math.random() * 92) + 'vw';
-      bubble.style.bottom = '-90px';
-      bubble.style.animationDuration = (Math.random() * 2 + 4) + 's';
-      bubble.style.opacity = Math.random() * 0.13 + 0.19;
-      bubbleBg.appendChild(bubble);
-      setTimeout(() => bubble.remove(), 6200);
-    }
-
-    // Service worker registration (should only run once)
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js")
-        .then(reg => console.log("Service Worker registered:", reg.scope))
-        .catch(err => console.log("Service Worker registration failed:", err));
-    }
-
-    setInterval(createBubble, 600);
   </script>
 </body>
 </html>
